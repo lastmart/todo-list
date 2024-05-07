@@ -1,5 +1,11 @@
-﻿function createElement(tag, attributes, children) {
+﻿function createElement(tag, attributes, children, callbacks) {
     const element = document.createElement(tag);
+
+    if (callbacks) {
+        callbacks.forEach(callback => {
+          element.addEventListener('click', callback);
+        });
+    }
 
     if (attributes) {
         Object.keys(attributes).forEach((key) => {
@@ -45,13 +51,7 @@ class TodoList extends Component {
     }
 
     render() {
-        const todoItems = this.state.map((todo) =>
-            createElement("li", {key: todo.id}, [
-                createElement("input", {type: "checkbox", checked: todo.completed}),
-                createElement("label", {}, todo.text),
-                createElement("button", {}, "🗑️"),
-            ])
-        );
+        const todoItems = this.state.map((todo) => this._createTask(todo));
 
         return createElement("div", {class: "todo-list"}, [
             createElement("h1", {}, "TODO List"),
@@ -61,10 +61,31 @@ class TodoList extends Component {
                     type: "text",
                     placeholder: "Задание",
                 }),
-                createElement("button", {id: "add-btn"}, "+"),
+                createElement("button", {id: "add-btn"}, "+", [() => TodoList.onAddTask(this)]),
             ]),
             createElement("ul", {id: "todos"}, todoItems),
         ]);
+    }
+
+    _createTask(element) {
+      return createElement("li", {key: element.id}, [
+        createElement("input", {type: "checkbox", checked: element.completed}),
+        createElement("label", {}, element.text),
+        createElement("button", {}, "🗑️"),
+      ]);
+    }
+
+    static onAddTask(todoList) {
+      const inputElement = document.getElementById('new-todo');
+      const element = { id: todoList.state.length() + 1, text: inputElement.value, completed: false };
+      todoList.state.push(element);
+      const todos = document.getElementById('todos');
+      todos.appendChild(todoList._createTask(element));
+      inputElement.value = "";
+    }
+
+    static onAddInputChange() {
+      
     }
 }
 
@@ -98,5 +119,13 @@ class State {
             result.push(lambda(task));
         }
         return result;
+    }
+
+    push(element) {
+      this.tasks.push(element);
+    }
+
+    length() {
+      return this.tasks.length;
     }
 }
