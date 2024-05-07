@@ -37,11 +37,11 @@ class Component {
 class TodoList extends Component {
     constructor() {
         super();
-        this.state = [
+        this.state = new State([
             {id: 1, text: "Сделать домашку", completed: false},
             {id: 2, text: "Сделать практику", completed: false},
             {id: 3, text: "Пойти домой", completed: false},
-        ];
+        ]);
     }
 
     render() {
@@ -71,3 +71,32 @@ class TodoList extends Component {
 document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(new TodoList().getDomNode());
 });
+
+class State {
+    constructor(tasks) {
+        this.tasks = tasks;
+    }
+
+    [Symbol.iterator]() {
+        let index = 0;
+        let todos = this.tasks;
+
+        return {
+            next: () => {
+                if (index < todos.length) {
+                    return {value: todos[index++], done: false};
+                } else {
+                    return {done: true};
+                }
+            }
+        };
+    }
+
+    map(lambda) {
+        const result = [];
+        for (const task of this.tasks) {
+            result.push(lambda(task));
+        }
+        return result;
+    }
+}
