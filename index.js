@@ -3,7 +3,7 @@
 
     if (callbacks) {
         callbacks.forEach(callback => {
-          element.addEventListener('click', callback);
+            element.addEventListener('click', callback);
         });
     }
 
@@ -38,54 +38,66 @@ class Component {
         this._domNode = this.render();
         return this._domNode;
     }
+
+    update() {
+        document.querySelector('.todo-list').remove();
+        document.body.appendChild(this.render());
+    }
 }
 
 class TodoList extends Component {
     constructor() {
         super();
+
         this.state = new State([
-            {id: 1, text: "Сделать домашку", completed: false},
-            {id: 2, text: "Сделать практику", completed: false},
-            {id: 3, text: "Пойти домой", completed: false},
+            new Task(1, "Сделать домашку"),
+            new Task(2, "Сделать практику"),
+            new Task(3, "Пойти домой")
         ]);
     }
 
     render() {
-        const todoItems = this.state.map((todo) => this._createTask(todo));
+        const todoItems = this.state.map((todo) => this._createTaskElement(todo));
+        this.todos = createElement("ul", {id: "todos"}, todoItems);
+        this.inputLine = createElement("input", {
+                id: "new-todo",
+                type: "text",
+                placeholder: "Задание",
+            },
+            [() => TodoList.onAddInputChange(this)]
+        );
 
         return createElement("div", {class: "todo-list"}, [
             createElement("h1", {}, "TODO List"),
             createElement("div", {class: "add-todo"}, [
-                createElement("input", {
-                    id: "new-todo",
-                    type: "text",
-                    placeholder: "Задание",
-                }),
+                this.inputLine,
                 createElement("button", {id: "add-btn"}, "+", [() => TodoList.onAddTask(this)]),
             ]),
-            createElement("ul", {id: "todos"}, todoItems),
+            this.todos,
         ]);
     }
 
-    _createTask(element) {
-      return createElement("li", {key: element.id}, [
-        createElement("input", {type: "checkbox", checked: element.completed}),
-        createElement("label", {}, element.text),
-        createElement("button", {}, "🗑️"),
-      ]);
+    _createTaskElement(element) {
+        return createElement("li", {key: element.id}, [
+            createElement("input", {type: "checkbox", checked: element.completed}),
+            createElement("label", {}, element.text),
+            createElement("button", {}, "🗑️"),
+        ]);
     }
 
     static onAddTask(todoList) {
-      const inputElement = document.getElementById('new-todo');
-      const element = { id: todoList.state.length() + 1, text: inputElement.value, completed: false };
-      todoList.state.push(element);
-      const todos = document.getElementById('todos');
-      todos.appendChild(todoList._createTask(element));
-      inputElement.value = "";
+        const inputElement = todoList.inputLine;
+        const task = new Task(todoList.state.length() + 1, inputElement.value);
+        todoList.state.current = task;
+        todoList.state.push(task);
+        inputElement.value = "";
+        todoList.update();
     }
 
-    static onAddInputChange() {
-      
+    static onAddInputChange(todoList) {
+        const inputElement = todoList.inputLine;
+        const currentTask = todoList.state.current;
+        currentTask.text = inputElement.value;
     }
 }
 
@@ -96,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 class State {
     constructor(tasks) {
         this.tasks = tasks;
+        this.current = tasks.indexOf(-1);
     }
 
     [Symbol.iterator]() {
@@ -122,10 +135,18 @@ class State {
     }
 
     push(element) {
-      this.tasks.push(element);
+        this.tasks.push(element);
     }
 
     length() {
-      return this.tasks.length;
+        return this.tasks.length;
+    }
+}
+
+class Task {
+    constructor(id, text, completed = false) {
+        this.id = id;
+        this.text = text;
+        this.completed = completed;
     }
 }
