@@ -79,9 +79,9 @@ class TodoList extends Component {
 
     _createTaskElement(element) {
         return createElement("li", {key: element.id}, [
-            createElement("input", {type: "checkbox", checked: element.completed}),
+            createElement("input", {type: "checkbox"}, undefined, [() => TodoList.onChekboxChange(element)]),
             createElement("label", {}, element.text),
-            createElement("button", {}, "🗑️"),
+            createElement("button", {}, "🗑️", [() => TodoList.onDelete(element, this.state)]),
         ]);
     }
 
@@ -98,6 +98,21 @@ class TodoList extends Component {
         const inputElement = todoList.inputLine;
         const currentTask = todoList.state.current;
         currentTask.text = inputElement.value;
+    }
+
+    static onChekboxChange(element) {
+      element.completed = !element.completed;
+      const li = document.querySelector(`li[key="${element.id}"]`);
+      if (element.completed) {
+        li.style.cssText = `background-color:red;`
+      }else {
+        li.style.cssText = '';
+      }
+    }
+
+    static onDelete(element, todoList) {
+      document.querySelector(`li[key="${element.id}"]`).remove();
+      todoList.remove(element.id);
     }
 }
 
@@ -136,6 +151,17 @@ class State {
 
     push(element) {
         this.tasks.push(element);
+    }
+
+    remove(id) {
+      let curid = 0;
+      for (let i = 0; i < this.tasks.length; i++) {
+        if (this.tasks[i].id === id){
+          curid = i;
+          break;
+        }
+      }
+      this.tasks.splice(curid, 1);
     }
 
     length() {
